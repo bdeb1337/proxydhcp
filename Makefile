@@ -1,5 +1,5 @@
 BINARY := proxydhcp
-OSFLAG := $(shell go env GOHOSTOS)
+OSFLAG := windows
 REPO:= github.com/jacobweinstock
 
 help:
@@ -8,6 +8,10 @@ help:
 .PHONY: test
 test: ## Run unit tests
 	go test -v -covermode=count ./...
+
+.PHONY: build-windows
+build-windows: ## Compile for windows
+    $env:GOOS="windows"; $env:GOARCH="amd64"; $env:CGO_ENABLED=0; go build -trimpath -ldflags '-s -w -extldflags "-static"' -o bin/proxydhcp-windows.exe main.go
 
 .PHONY: build-linux
 build-linux: ## Compile for linux
@@ -20,9 +24,11 @@ build-darwin: ## Compile for darwin
 .PHONY: build
 build: ## Compile the binary for the native OS
 ifeq (${OSFLAG},linux)
-	@$(MAKE) build-linux
-else
-	@$(MAKE) build-darwin
+    @$(MAKE) build-linux
+else ifeq (${OSFLAG},darwin)
+    @$(MAKE) build-darwin
+else ifeq (${OSFLAG},windows)
+    @$(MAKE) build-windows
 endif
 
 .PHONY: build-image
@@ -48,9 +54,9 @@ cover: ## Run unit tests with coverage report
 GOLINT_VERSION ?= v1.42.0
 HADOLINT_VERSION ?= v2.7.0
 SHELLCHECK_VERSION ?= v0.7.2
-LINT_OS := $(shell uname)
-LINT_ARCH := $(shell uname -m)
-LINT_ROOT := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+LINT_OS := Windows
+LINT_ARCH := x86_64 # replace with your architecture
+LINT_ROOT := C:/Users/u0113043/Operations/work/proxydhcp # replace with your directory
 
 # shellcheck and hadolint lack arm64 native binaries: rely on x86-64 emulation
 ifeq ($(LINT_OS),Darwin)
